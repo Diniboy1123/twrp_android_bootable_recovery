@@ -137,6 +137,7 @@ enum TW_FSTAB_FLAGS {
 	TWFLAG_METADATA_ENCRYPTION,
 	TWFLAG_FLASHIMG,
 	TWFLAG_FORCEENCRYPT,
+	TWFLAG_FSCOMPRESS,
 	TWFLAG_FSFLAGS,
 	TWFLAG_IGNOREBLKID,
 	TWFLAG_LENGTH,
@@ -186,6 +187,7 @@ const struct flag_list tw_flags[] = {
 	{ "metadata_encryption=",   TWFLAG_METADATA_ENCRYPTION },
 	{ "flashimg",               TWFLAG_FLASHIMG },
 	{ "forceencrypt=",          TWFLAG_FORCEENCRYPT },
+	{ "fscompress",             TWFLAG_FSCOMPRESS },
 	{ "fsflags=",               TWFLAG_FSFLAGS },
 	{ "ignoreblkid",            TWFLAG_IGNOREBLKID },
 	{ "length=",                TWFLAG_LENGTH },
@@ -246,6 +248,7 @@ TWPartition::TWPartition() {
 	Backup_Size = 0;
 	Can_Be_Encrypted = false;
 	Is_Encrypted = false;
+	Is_Compressed = false;
 	Is_Decrypted = false;
 	Is_FBE = false;
 	Mount_To_Decrypt = false;
@@ -944,6 +947,9 @@ void TWPartition::Apply_TW_Flag(const unsigned flag, const char* str, const bool
 			break;
 		case TWFLAG_FLASHIMG:
 			Can_Flash_Img = val;
+			break;
+		case TWFLAG_FSCOMPRESS:
+			Is_Compressed = val;
 			break;
 		case TWFLAG_FSFLAGS:
 			Process_FS_Flags(str);
@@ -2442,6 +2448,9 @@ bool TWPartition::Wipe_F2FS() {
 
 	if(needs_casefold)
 		f2fs_command += " -O casefold -C utf8";
+
+	if(Is_Compressed)
+		f2fs_command += " -O compression,extra_attr";
 
 	f2fs_command += " " + Actual_Block_Device + " " + dev_sz_str;
 
